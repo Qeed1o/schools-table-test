@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   },
 
   app: {
-    baseURL: process.env.NODE_ENV === 'production' ? '/schools-table-test/' : '/assets/',
+    baseURL: process.env.NODE_ENV === 'production' ? '/schools-table-test/' : '/assets',
     buildAssetsDir: 'assets'
   },
 
