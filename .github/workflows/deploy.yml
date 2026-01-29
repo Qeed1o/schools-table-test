@@ -25,9 +25,9 @@ jobs:
         with:
           node-version: '24'
       - name: Install dependencies
-        run: |
-          npm install
-          npm run generate
+        run: npm install
+      - name: Build
+        run: NODE_ENV=production npm run generate
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
