@@ -27,7 +27,6 @@ jobs:
       - name: Build
         env:
           NODE_ENV: production
-          BASE_API_URL: https://schooldb.skillline.ru/api/
         run: npm run generate
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
