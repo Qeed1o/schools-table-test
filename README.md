@@ -12,3 +12,5 @@
 в страницах минимум логики
 
 Остальная файловая структура по [официальной документации](https://nuxt.com/docs/guide)
+
+[Ссылка на pages](https://github.com/Qeed1o/schools-table-test)
