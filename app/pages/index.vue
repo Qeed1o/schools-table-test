@@ -1,83 +1,90 @@
 <template>
-  <div class="w-full space-y-4 pb-4">
-    <UTable
-      ref="table"
-      v-model:row-selection="rowSelection"
-      :loading="isLoading"
-      :data="data.list"
-      :columns="columns"
-      :ui="{
-        thead: 'bg-[#F0F0F7]',
-        root: 'mb-0',
-        td: 'max-w-md whitespace-break-spaces'
-      }"
-      @select="onSelect"
-    />
-    <div class="flex justify-between border-t border-default pt-4 px-4">
-      <UPagination
-        v-model:page="pagination.pageIndex"
-        :items-per-page="pagination.pageSize"
-        :loading="isLoading"
-        :total="data.total_count"
-        :sibling-count="1"
-        active-color="neutral"
-        variant="ghost"
-        show-edges
+  <div class="w-full h-full flex flex-col gap-6">
+    <div class="flex flex-col md:justify-between md:flex-row items-center mb-4 md:mb-0 gap-3">
+      <h1 class="text-2xl font-bold text-[#111827]">
+        Таблица учреждений
+      </h1>
+      <div class="w-full md:w-auto flex flex-col md:flex-row items-center gap-3">
+        <app-input
+          v-model="search"
+          class="w-full md:w-auto"
+          trailing-icon="app:search"
+          placeholder="Поиск"
+          size="lg"
+          :ui="{
+            base: 'hover:bg-[#F1F4FD]'
+          }"
+        />
+        <app-button
+          class="w-full md:w-auto"
+          label="Скачать"
+          icon="app:download"
+          type="accent"
+          size="lg"
+          :ui="{
+            label: 'text-[#0E0E10]',
+            base: 'justify-center md:justify-start'
+          }"
+          :loading="isDownloadLoading"
+          @click="download()"
+        />
+      </div>
+    </div>
+    <div class="flex flex-col md:flex-row gap-3">
+      <app-popover-calendar v-model="calendar" />
+      <app-select
+        v-model="region"
+        class="w-full"
+        clear
+        :items="regions"
+        :loading="isRegionsLoading"
+        size="lg"
+        label-key="name"
+        placeholder="Все виды"
+      />
+      <app-select
+        v-model="federalDistrict"
+        class="w-full"
+        clear
+        :items="federalDistricts"
+        :loading="isFederalDistrictsLoading"
+        size="lg"
+        label-key="name"
+        placeholder="Все статусы"
+      />
+    </div>
+    <div class="content">
+      <app-table
+        ref="table"
+        :columns="columns"
+        :data="data"
+        :loading="isSchoolsLoading"
         :ui="{
-          first: 'hidden',
-          last: 'hidden',
-          next: 'border border-[#D3D3DE] rounded-lg ml-4',
-          prev: 'border border-[#D3D3DE] rounded-lg mr-4',
-          item: 'pagination-item'
+          thead: 'bg-[#F0F0F7]',
+          root: 'mb-0',
+          td: 'max-w-md whitespace-break-spaces'
         }"
       />
-      <div class="flex gap-8 font-normal text-[#687588] text-sm items-center">
-        <span>{{ itemsOnPageText }} из {{ data.total_count }} записей</span>
-        <div class="flex gap-1 items-center">
-          <span>Показывать</span>
-          <USelectMenu
-            v-model="pagination.pageSize"
-            :loading="isLoading"
-            :items="[5, 10, 20, 30, 40, 50]"
-            :search-input="false"
-            :selected-icon="'-'"
-            :ui="{
-              item: 'rounded-lg bg-[#E4E4EE] px-2 py-1 mb-1 menu-item',
-              content: 'min-w-min',
-              base: 'hover:bg-[#F1F4FD]',
-              value: 'color-[#93939B]'
-            }"
-            @update:model-value="pagination.pageIndex = 1"
-          />
-        </div>
-      </div>
+      <app-table-pagination
+        v-model:pagination="pagination"
+        with-page-size
+        :loading="isSchoolsLoading"
+        :page-size-options="[5, 10, 20, 30, 40, 50]"
+        :data="data"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+const { data: regions, isLoading: isRegionsLoading, region } = useRegions()
+const { data: federalDistricts, isLoading: isFederalDistrictsLoading, federalDistrict } = useFederalDistricts()
+const { data, isLoading: isSchoolsLoading, pagination, columns, search, calendar } = useSchools(region, federalDistrict)
+const { download, isLoading: isDownloadLoading } = useSchoolsDownload(region, pagination, calendar)
+
 const table = useTemplateRef('table')
-const { data, status, pagination, columns, rowSelection, onSelect } = useSchools()
-
-watch(pagination.value, () => table.value?.tableApi.toggleAllPageRowsSelected(false))
-
-const itemsOnPageText = computed(() => {
-  const base = (data.value.page - 1) * pagination.value.pageSize
-  return `${base} - ${base + pagination.value.pageSize}`
+watch(pagination.value, () => {
+  search.value = ''
+  table.value?.toggleAllPageRowsSelected(false)
 })
-
-const isLoading = computed(() => status.value === 'pending')
 </script>
-
-<style>
-  .menu-item[data-state=checked] span[data-slot=itemLabel] {
-    color: #93939B;
-  }
-
-  .pagination-item {
-    color: #0E0E10;
-  }
-  .pagination-item[data-selected=true] {
-    background-color: #F0F0F7;
-  }
-</style>

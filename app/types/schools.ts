@@ -1,3 +1,5 @@
+import type { ApiListResponse } from '~/types'
+
 export interface CodeNamePair {
   name: string | null
   code: string | null
@@ -99,9 +101,4 @@ export interface School {
   decisions: unknown[]
 }
 
-export interface SchoolsResponse {
-  pages_count: number
-  page: number
-  total_count: number
-  list: School[]
-}
+export type SchoolsResponse = ApiListResponse<School>

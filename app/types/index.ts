@@ -1,2 +1,6 @@
 export * from './schools'
 export * from './api-response'
+export * from './ui-prop'
+export * from './region'
+export * from './api-list-response'
+export * from './federal-district'

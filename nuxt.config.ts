@@ -16,6 +16,12 @@ export default defineNuxtConfig({
     colorMode: false
   },
 
+  runtimeConfig: {
+    public: {
+      BASE_API_URL: process.env.BASE_API_URL
+    }
+  },
+
   routeRules: {
     '/': { prerender: true }
   },

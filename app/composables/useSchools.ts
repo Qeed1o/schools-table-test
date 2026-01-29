@@ -1,126 +1,78 @@
-import type { ApiResponse, School, SchoolsResponse } from '~/types'
-import UCheckbox from '@nuxt/ui/components/Checkbox.vue'
+import type { ApiResponse, FederalDistrict, Region, School, SchoolsResponse } from '~/types'
 import UBadge from '@nuxt/ui/components/Badge.vue'
-import UButton from '@nuxt/ui/components/Button.vue'
-import type { TableColumn, TableRow } from '@nuxt/ui'
+import type { TableColumn } from '@nuxt/ui'
+import type { DateValue } from '@internationalized/date'
 
 interface PaginationState {
   pageIndex: number
   pageSize: number
 }
 
-export const useSchools = () => {
+export const useSchools = (region: Ref<Region | undefined>, federalDistrict: Ref<FederalDistrict | undefined>) => {
+  const { BASE_API_URL } = useRuntimeConfig().public
   const pagination = ref<PaginationState>({
     pageIndex: 1,
     pageSize: 5
   })
+  const search = ref<string>('')
+  const calendar = shallowRef<{ start: DateValue | undefined, end: DateValue | undefined }>({
+    start: undefined,
+    end: undefined
+  })
 
-  const { data, status } = useFetch<ApiResponse<SchoolsResponse>>('https://schooldb.skillline.ru/api/schools', {
+  const { data, status } = useFetch<ApiResponse<SchoolsResponse>>(`${BASE_API_URL}schools`, {
     key: 'schools',
     query: computed(() => ({
       count: pagination.value.pageSize,
-      page: pagination.value.pageIndex
+      page: pagination.value.pageIndex,
+      region_id: region.value?.id ?? undefined,
+      federal_district_id: federalDistrict.value?.id ?? undefined,
+      updated_at: dateValueToYmd(calendar.value.start)
     })),
     retry: 0
   })
-  const schoolsData = computed<SchoolsResponse>(() => data.value?.data ?? { list: [], page: 0, pages_count: 0, total_count: 0 })
+  const schoolsData = computed<SchoolsResponse>(() => {
+    if (data.value?.data) {
+      const list = data.value.data.list
+        .map(addIdSchools)
+        .filter(schoolSearchFilter(search.value))
+      return { ...data.value.data, list }
+    }
+    return { list: [], page: 0, pages_count: 0, total_count: 0 }
+  })
 
-  const rowSelection = ref<Record<string, boolean>>({})
-  const onSelect = (e: Event, row: TableRow<School>) => {
-    row.toggleSelected(!row.getIsSelected())
-  }
+  const isLoading = computed(() => status.value === 'pending')
 
-  return { data: schoolsData, status, pagination, columns, onSelect, rowSelection }
+  return { data: schoolsData, isLoading, pagination, columns, search, calendar }
 }
 
 const columns: TableColumn<School>[] = [
   {
     id: 'select',
-    header: ({ table }) => h(UCheckbox, {
-      'modelValue': table.getIsSomePageRowsSelected()
+    header: ({ table }) => createCheckbox(
+      table.getIsSomePageRowsSelected()
         ? 'indeterminate'
         : table.getIsAllPageRowsSelected(),
-      'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
-        table.toggleAllPageRowsSelected(!!value),
-      'aria-label': 'Select all',
-      'ui': {
-        indicator: 'bg-[#1B1B1F]',
-        base: 'bg-[#D3D3DE] rounded-none'
-      }
-    }),
-    cell: ({ row }) =>
-      h(UCheckbox, {
-        'modelValue': row.getIsSelected(),
-        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        'aria-label': 'Select row',
-        'ui': {
-          indicator: 'bg-[#1B1B1F]',
-          base: 'bg-[#D3D3DE] rounded-none'
-        }
-      })
+      (value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value),
+      'Select all'
+    ),
+    cell: ({ row }) => createCheckbox(
+      row.getIsSelected(),
+      (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
+      'Select row'
+    )
   },
   {
     accessorKey: 'edu_org.region.name',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        class: 'w-full flex justify-between hover:bg-[#F0F0F7]',
-        ui: {
-          label: 'text-base font-bold transition duration-300 ease-in-out text-[#55555C] hover:text-[#0E0E10]'
-        },
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Регион',
-        trailingIcon: isSorted
-          ? isSorted === 'asc'
-            ? 'app:sort-asc'
-            : 'app:sort-desc'
-          : 'app:unsorted',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    }
+    header: ({ column }) => createSortableHeader('Регион', column)
   },
   {
     accessorKey: 'edu_org.short_name',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        class: 'w-full flex justify-between hover:bg-[#F0F0F7]',
-        ui: {
-          label: 'text-base font-bold transition duration-300 ease-in-out text-[#55555C] hover:text-[#0E0E10]'
-        },
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Название',
-        trailingIcon: isSorted
-          ? isSorted === 'asc'
-            ? 'app:sort-asc'
-            : 'app:sort-desc'
-          : 'app:unsorted',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    }
+    header: ({ column }) => createSortableHeader('Название', column)
   },
   {
     accessorKey: 'edu_org.contact_info.post_address',
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        class: 'w-full flex justify-between hover:bg-[#F0F0F7]',
-        ui: {
-          label: 'text-base font-bold transition duration-300 ease-in-out text-[#55555C] hover:text-[#0E0E10]'
-        },
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Адрес',
-        trailingIcon: isSorted
-          ? isSorted === 'asc'
-            ? 'app:sort-asc'
-            : 'app:sort-desc'
-          : 'app:unsorted',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    }
+    header: ({ column }) => createSortableHeader('Адрес', column)
   },
   {
     id: 'education_level',
@@ -133,23 +85,6 @@ const columns: TableColumn<School>[] = [
         badges.map(label => h(UBadge, { class: 'capitalize min-w-min', variant: 'outline', color: 'neutral', label }))
       )
     },
-    header: ({ column }) => {
-      const isSorted = column.getIsSorted()
-      return h(UButton, {
-        class: 'w-full flex justify-between hover:bg-[#F0F0F7]',
-        ui: {
-          label: 'text-base font-bold transition duration-300 ease-in-out text-[#55555C] hover:text-[#0E0E10]'
-        },
-        color: 'neutral',
-        variant: 'ghost',
-        label: 'Уровень образования',
-        trailingIcon: isSorted
-          ? isSorted === 'asc'
-            ? 'app:sort-asc'
-            : 'app:sort-desc'
-          : 'app:unsorted',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
-      })
-    }
+    header: ({ column }) => createSortableHeader('Уровень образования', column)
   }
 ]

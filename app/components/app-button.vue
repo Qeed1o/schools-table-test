@@ -4,18 +4,27 @@
     :label="label"
     :variant="type === 'secondary' ? 'outline' : 'solid'"
     :color="type === 'secondary' ? 'neutral' : 'primary'"
+    :size="size"
     :icon="icon"
-  />
+    :trailing-icon="trailingIcon"
+    :ui="ui"
+  >
+    <slot />
+  </UButton>
 </template>
 
 <script setup lang="ts">
 import type { ButtonProps } from '@nuxt/ui'
+import type { UiProps } from '~/types'
 
-const { label, icon, type = 'accent' } = defineProps<{
-  label: ButtonProps['label']
+withDefaults(defineProps<{
+  label?: ButtonProps['label']
   icon?: ButtonProps['icon']
   type?: 'accent' | 'primary' | 'secondary'
-}>()
+  size?: ButtonProps['size']
+  ui?: UiProps<'base' | 'label'>
+  trailingIcon?: ButtonProps['trailingIcon']
+}>(), { type: 'accent' })
 </script>
 
 <style scoped>
@@ -47,6 +56,7 @@ const { label, icon, type = 'accent' } = defineProps<{
 
     .accent {
         transition: background-color .3s ease-out;
+        background-color: #33D35E;
     }
     .accent:hover {
         background-color: #24C14E;
