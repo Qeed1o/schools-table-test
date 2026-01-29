@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   },
 
   app: {
-    baseURL: 'https://qeed1o.github.io/schools-table-test',
+    baseURL: '',
     buildAssetsDir: 'assets'
   },
 
@@ -28,7 +28,8 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
+    '/ui': { ssr: false, prerender: true }
   },
 
   compatibilityDate: '2025-01-15',

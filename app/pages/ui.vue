@@ -55,6 +55,7 @@
 
 <script lang="ts" setup>
 import type { TableColumn } from '@nuxt/ui'
+import { createSortableHeader } from '~/utils/createSortableHeader'
 
 const columns: TableColumn<unknown>[] = [
   { accessorKey: 'id', header: () => createSortableHeader('ID', { getIsSorted: () => false, toggleSorting: () => {} }) },
