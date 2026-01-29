@@ -10,6 +10,11 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  app: {
+    baseURL: 'https://qeed1o.github.io/schools-table-test',
+    buildAssetsDir: 'assets'
+  },
+
   css: ['~/assets/css/main.css'],
 
   ui: {
